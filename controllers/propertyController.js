@@ -1,12 +1,12 @@
 //Property Model Object from propertyModel file
-const { findByIdAndUpdate } = require("../models/userModel");
-const User = require("../models/userModel");
-const APIFeatures = require("../utils/apiFeatures");
-const AppError = require("../utils/appError");
-const catchAsync = require("../utils/catchAsync");
-const Property = require("./../models/propertyModel");
-const multer = require("multer");
-const sharp = require("sharp");
+const { findByIdAndUpdate } = require('../models/userModel');
+const User = require('../models/userModel');
+const APIFeatures = require('../utils/apiFeatures');
+const AppError = require('../utils/appError');
+const catchAsync = require('../utils/catchAsync');
+const Property = require('./../models/propertyModel');
+const multer = require('multer');
+const sharp = require('sharp');
 //Create Property
 
 // exports.createProperty = catchAsync(async (req, res) => {
@@ -23,10 +23,10 @@ const sharp = require("sharp");
 const multerStorage = multer.memoryStorage();
 
 const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image")) {
+  if (file.mimetype.startsWith('image')) {
     cb(null, true);
   } else {
-    cb(new AppError("Not an image! Please upload only images.", 400), false);
+    cb(new AppError('Not an image! Please upload only images.', 400), false);
   }
 };
 
@@ -36,8 +36,8 @@ const upload = multer({
 });
 
 exports.uploadPropertyImages = upload.fields([
-  { name: "coverImage", maxCount: 1 },
-  { name: "images", maxCount: 6 },
+  { name: 'coverImage', maxCount: 1 },
+  { name: 'images', maxCount: 6 },
 ]);
 
 exports.resizePropertyImages = catchAsync(async (req, res, next) => {
@@ -49,7 +49,7 @@ exports.resizePropertyImages = catchAsync(async (req, res, next) => {
   }-${Date.now()}-cover.jpeg`;
   await sharp(req.files.coverImage[0].buffer)
     .resize(2000, 1333)
-    .toFormat("jpeg")
+    .toFormat('jpeg')
     .jpeg({ quality: 90 })
     .toFile(`public/img/properties/${req.body.coverImage}`);
 
@@ -64,7 +64,7 @@ exports.resizePropertyImages = catchAsync(async (req, res, next) => {
 
       await sharp(file.buffer)
         .resize(2000, 1333)
-        .toFormat("jpeg")
+        .toFormat('jpeg')
         .jpeg({ quality: 90 })
         .toFile(`public/img/properties/${filename}`);
 
@@ -76,25 +76,26 @@ exports.resizePropertyImages = catchAsync(async (req, res, next) => {
 });
 //!==========Property Image Uploads
 exports.aliasLatestBuy = (req, res, next) => {
-  req.query.limit = "2";
-  req.query.sort = "-createdAt,-price";
+  req.query.limit = '2';
+  req.query.sort = '-createdAt,-price';
   // req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
-  req.query.propertyFor = "buy";
+  req.query.propertyFor = 'buy';
   next();
 };
 exports.aliasLatestRent = (req, res, next) => {
-  req.query.limit = "2";
-  req.query.sort = "-createdAt,-price";
+  req.query.limit = '2';
+  req.query.sort = '-createdAt,-price';
   // req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
-  req.query.propertyFor = "rent";
+  // req.query.propertyFor = 'rent';
+  req.query.category = 'rent';
   next();
 };
 
 exports.createProperty = catchAsync(async (req, res) => {
-  // console.log(req.body);
+  console.log('check=>', req.body);
 
   const data = { postedBy: req.params.userId, ...req.body };
-  // console.log(data);
+  console.log('check=>', data);
   const property = await Property.create(data);
 
   const user = await User.findByIdAndUpdate(
@@ -104,7 +105,7 @@ exports.createProperty = catchAsync(async (req, res) => {
   );
 
   res.status(201).json({
-    status: "success",
+    status: 'success',
     data: {
       property,
       user,
@@ -158,7 +159,7 @@ exports.createProperty = catchAsync(async (req, res) => {
 //   });
 // });
 exports.searchProperty = catchAsync(async (req, res) => {
-  console.log("In Search Properties");
+  console.log('In Search Properties');
   const key = JSON.parse(req.query.searchdata);
   console.log(key);
   // const property = await Property.find({
@@ -171,7 +172,7 @@ exports.searchProperty = catchAsync(async (req, res) => {
   // });
 
   let features;
-  if (key === "all") {
+  if (key === 'all') {
     features = new APIFeatures(Property.find({}), req.query)
       .filter()
       .sort()
@@ -182,9 +183,9 @@ exports.searchProperty = catchAsync(async (req, res) => {
       Property.find({
         $or: [
           { subCategory: { $regex: key.subCategory } },
-          { province: { $regex: key.province, $options: "i" } },
-          { city: { $regex: key.city, $options: "i" } },
-          { area: { $regex: key.area, $options: "i" } },
+          { province: { $regex: key.province, $options: 'i' } },
+          { city: { $regex: key.city, $options: 'i' } },
+          { area: { $regex: key.area, $options: 'i' } },
         ],
         category: { $eq: key.category },
         subCategory: { $eq: key.subCategory },
@@ -197,10 +198,12 @@ exports.searchProperty = catchAsync(async (req, res) => {
       .limitFields()
       .paginate();
   }
-  const properties = await features.query;
+  let properties = await features.query;
+
+  properties = properties?.filter((property) => property.isApproved === true);
 
   res.status(201).json({
-    status: "success",
+    status: 'success',
     data: {
       properties,
     },
@@ -211,7 +214,7 @@ exports.getProperty = catchAsync(async (req, res) => {
   const property = await Property.findById(req.params.id); // find property in database by id
   console.log(property);
   res.status(201).json({
-    status: "success",
+    status: 'success',
     data: {
       property,
     },
@@ -231,7 +234,7 @@ exports.getAllProperty = catchAsync(async (req, res) => {
   const property = await features.query;
 
   res.status(201).json({
-    status: "success",
+    status: 'success',
     data: {
       property,
     },
@@ -246,7 +249,7 @@ exports.updateProperty = catchAsync(async (req, res) => {
   });
 
   res.status(201).json({
-    status: "success",
+    status: 'success',
     data: {
       property,
     },
@@ -264,7 +267,7 @@ exports.approveProperty = catchAsync(async (req, res) => {
   );
 
   res.status(201).json({
-    status: "success",
+    status: 'success',
     data: {
       property,
     },
@@ -279,7 +282,7 @@ exports.deleteProperty = catchAsync(async (req, res) => {
   //Deleting property from user refernce is pending
 
   res.status(201).json({
-    status: "success",
+    status: 'success',
     data: {
       property,
     },
@@ -296,7 +299,7 @@ exports.unApprovedProperties = catchAsync(async (req, res) => {
   ]);
 
   res.status(200).json({
-    status: "success",
+    status: 'success',
     data: {
       properties,
     },

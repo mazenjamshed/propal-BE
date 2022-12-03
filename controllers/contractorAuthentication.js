@@ -12,7 +12,8 @@ const signToken = (id) => {
 };
 
 exports.signUp = catchAsync(async (req, res) => {
-  const data = ({ username, email, password, confirmPassword } = req.body);
+  const data = ({ username, email, password, confirmPassword, phoneNumber } =
+    req.body);
   console.log(data);
 
   const contractor = await Contractor.create(data);
@@ -83,7 +84,10 @@ exports.login = catchAsync(async (req, res, next) => {
   await contractor.populate('gigs');
 
   // Check User exists or Password is incorrect
-  if (!contractor || !(await contractor.correctPassword(password, contractor.password))) {
+  if (
+    !contractor ||
+    !(await contractor.correctPassword(password, contractor.password))
+  ) {
     console.log('💥app error not working');
     return next(new AppError('Password or Email incorrect', 401));
   }

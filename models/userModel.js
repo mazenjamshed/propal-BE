@@ -1,8 +1,8 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const { Schema, model } = mongoose;
 
-const { isEmail } = require("validator");
+const { isEmail } = require('validator');
 
 const userSchema = new Schema({
   username: {
@@ -27,22 +27,22 @@ const userSchema = new Schema({
       validator: function (el) {
         return el === this.password;
       },
-      message: "Passwords are not the same!",
+      message: 'Passwords are not the same!',
     },
   },
   phone: {
     type: String,
     unique: true,
-    required: [true, "Please enter your phone number"],
+    required: [false, 'Please enter your phone number'],
   },
-  properties: [{ type: Schema.Types.ObjectId, ref: "Property" }],
-  jobs: [{ type: Schema.Types.ObjectId, ref: "Job" }],
+  properties: [{ type: Schema.Types.ObjectId, ref: 'Property' }],
+  jobs: [{ type: Schema.Types.ObjectId, ref: 'Job' }],
 });
 
 //Password Hashing
-userSchema.pre("save", async function (next) {
+userSchema.pre('save', async function (next) {
   // Only run this function if password was actually modified
-  if (!this.isModified("password")) return next();
+  if (!this.isModified('password')) return next();
 
   // Hash the password with cost of 12
   this.password = await bcrypt.hash(this.password, 12);
@@ -59,6 +59,6 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(enteredPassword, password);
 };
 
-const User = model("User", userSchema);
+const User = model('User', userSchema);
 
 module.exports = User;
